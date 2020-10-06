@@ -95,7 +95,6 @@ async function createSheet(fileName, userInfo, workInfos) {
 
   pdfDoc.registerFontkit(fontkit);
   const font = await pdfDoc.embedFont(fontFile)
-  console.log(font.getCharacterSet())
 
   var page = pdfDoc.getPage(0)
   page.setFont(font);
@@ -104,6 +103,7 @@ async function createSheet(fileName, userInfo, workInfos) {
 
   const workInfoLen = workInfos.workInfoList.length
   const workDuration = workInfos.workInfoList[0].date + "~" + workInfos.workInfoList[workInfoLen-1].date
+  console.log("Generating " + workDuration + " pdf result")
 
   var fontSize = 8
   page.drawText(workDuration, {
@@ -128,7 +128,6 @@ async function createSheet(fileName, userInfo, workInfos) {
     fontSize = 8
     const height = 63
     var workInfo = workInfos.workInfoList[i]
-    console.log(workInfo)
     page.drawText(workInfo.date, {
       x: workStartDatePoint.x,
       y: workStartDatePoint.y - fontSize - height*i,
@@ -191,7 +190,6 @@ async function main(){
 
   for (var i = 0; i < workInfos.length; i++) {
     var work = workInfos[i];
-    console.log(i, work)
     await createSheet("./result" + i + ".pdf", userInfo, work)
   }
 }
