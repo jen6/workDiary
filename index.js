@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const { PDFDocument, StandardFonts} = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs');
@@ -191,7 +192,7 @@ async function main(){
   for (var i = 0; i < workInfos.length; i++) {
     var work = workInfos[i];
     console.log(i, work)
-    await createSheet("./test" + i + ".pdf", userInfo, work)
+    await createSheet("./result" + i + ".pdf", userInfo, work)
   }
 }
 
