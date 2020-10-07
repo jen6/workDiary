@@ -3,6 +3,10 @@ const { PDFDocument, StandardFonts} = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs');
 const parse = require('csv-parse/lib/sync');
+var path = require('path');
+
+var appDir = path.dirname(require.main.filename);
+
 
 class Point {
     constructor(x, y) {
@@ -52,8 +56,8 @@ class WorkInfos {
   }
 }
 
-const file = fs.readFileSync("assets/work.pdf")
-const fontFile = fs.readFileSync("assets/NanumBarunGothic.otf")
+const file = fs.readFileSync(appDir + "/assets/work.pdf")
+const fontFile = fs.readFileSync(appDir + "/assets/NanumBarunGothic.otf")
 
 async function drawUserInfo(page, userInfo) {
   const fontSize = 10
