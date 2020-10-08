@@ -63,7 +63,7 @@ class WorkInfos {
   }
 }
 
-const file = fs.readFileSync(appDir + "/assets/work2.pdf")
+const file = fs.readFileSync(appDir + "/assets/work.pdf")
 const fontFile = fs.readFileSync(appDir + "/assets/NanumBarunGothic.otf")
 
 async function drawUserInfo(page, userInfo) {
