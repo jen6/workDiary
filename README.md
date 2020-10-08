@@ -16,6 +16,8 @@ npm install -g https://github.com/jen6/workDiary
 ```
 $ workDiary csv.csv
 ```
-위 커맨드를 쉘에서 실행하면 result0~n.pdf 의 형태로 결과물이 나옵니다
+
+위 커맨드를 쉘에서 실행하면 "이름_시작일_종료일.pdf" 의 형태로 결과물이 나옵니다.
+E.g. `손건_8_17_8_21.pdf`
 
 ![](doc/example.png)
