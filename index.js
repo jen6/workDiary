@@ -18,6 +18,8 @@ class Point {
 const namePoint = new Point(153, 720);
 const birthPoint = new Point(294, 720);
 const milStartPoint = new Point(440, 720);
+const companyPoint = new Point(230, 680);
+const reasonPoint = new Point(147, 643);
 const phonePoint = new Point(282, 643);
 const durationPoint = new Point(455, 643);
 const workPlacePoint = new Point(200, 603);
@@ -25,17 +27,22 @@ const workStartDatePoint = new Point(101, 534);
 const workStartTimePoint = new Point(201, 542);
 const workEndTimePoint = new Point(201, 515);
 const workMemoPoint = new Point(316, 539);
+const chairmanPoint = new Point(327, 100);
 const writerPoint = new Point(327, 120);
+const signYearPoint = new Point(410, 155);
 const signMonthPoint = new Point(455, 155);
 const signDatePoint = new Point(489, 155);
 
 class UserInfo {
-  constructor(name, birth, milStartDate, phoneNumber, workPlace) {
+  constructor(name, birth, milStartDate, phoneNumber, workPlace, companyName, chairmanName, reason) {
     this.name = name;
     this.birth = birth;
     this.milStartDate = milStartDate;
     this.phoneNumber = phoneNumber;
     this.workPlace = workPlace;
+    this.companyName = companyName;
+    this.chairmanName = chairmanName;
+    this.reason = reason;
   }
 }
 
@@ -56,11 +63,11 @@ class WorkInfos {
   }
 }
 
-const file = fs.readFileSync(appDir + "/assets/work.pdf")
+const file = fs.readFileSync(appDir + "/assets/work2.pdf")
 const fontFile = fs.readFileSync(appDir + "/assets/NanumBarunGothic.otf")
 
 async function drawUserInfo(page, userInfo) {
-  const fontSize = 10
+  var fontSize = 10
   page.drawText(userInfo.name, {
     x: namePoint.x,
     y: namePoint.y - fontSize,
@@ -69,6 +76,11 @@ async function drawUserInfo(page, userInfo) {
   page.drawText(userInfo.name, {
     x: writerPoint.x,
     y: writerPoint.y - fontSize,
+    size: fontSize,
+  })
+  page.drawText(userInfo.companyName, {
+    x: companyPoint.x,
+    y: companyPoint.y - fontSize,
     size: fontSize,
   })
   page.drawText(userInfo.birth, {
@@ -91,10 +103,21 @@ async function drawUserInfo(page, userInfo) {
     y: workPlacePoint.y - fontSize,
     size: fontSize,
   })
+  page.drawText(userInfo.chairmanName, {
+    x: chairmanPoint.x,
+    y: chairmanPoint.y - fontSize,
+    size: fontSize,
+  })
+  fontSize = 8
+  page.drawText(userInfo.reason, {
+    x: reasonPoint.x,
+    y: reasonPoint.y - fontSize,
+    size: fontSize,
+  })
   return page;
 }
 
-async function createSheet(fileName, userInfo, workInfos) {
+async function createSheet(fileName, userInfo, workInfos, year) {
   const pdfDoc = await PDFDocument.load(file)
 
   pdfDoc.registerFontkit(fontkit);
@@ -117,6 +140,11 @@ async function createSheet(fileName, userInfo, workInfos) {
   })
 
   const splited = workInfos.workInfoList[workInfoLen-1].date.split('/')
+  page.drawText(year, {
+    x: signYearPoint.x,
+    y: signYearPoint.y - fontSize,
+    size: fontSize,
+  })
   page.drawText(splited[0], {
     x: signMonthPoint.x,
     y: signMonthPoint.y - fontSize,
@@ -166,11 +194,14 @@ async function parseCSV(csvFileName) {
     birth=records[1][1],
     milStartDate=records[2][1],
     phoneNumber=records[3][1],
-    workPlace=records[4][1]
+    workPlace=records[4][1],
+    companyName=records[5][1],
+    chairmanName=records[6][1],
+    reason=records[7][1],
   )
   var i = 0;
   var workInfos = [];
-  for(i = 5; i < records.length; i+=5) {
+  for(i = 8; i < records.length; i+=5) {
     const workWindow = records.slice(i, i+5)
     var works = []
     for(var workIdx = 0; workIdx < workWindow.length; workIdx++) {
@@ -189,12 +220,23 @@ async function parseCSV(csvFileName) {
 
 async function main(){
   var myArgs = process.argv.slice(2);
+  if (myArgs.length == 0) {
+    console.log("Usage : workDiary 'csv file path' '[year]'")
+    console.log("Example : workDiary ./sheet.csv 2020")
+  }
   const csvFileName = myArgs[0]
+  var year = myArgs[1]
+  if (typeof year === "undefined") {
+    year = new Date().getFullYear().toString();
+  }
   const [userInfo, workInfos] = await parseCSV(csvFileName);
 
   for (var i = 0; i < workInfos.length; i++) {
     var work = workInfos[i];
-    await createSheet("./result" + i + ".pdf", userInfo, work)
+    const startDate = work.startDate.replace('/', '_')
+    const endDate = work.endDate.replace('/', '_')
+    const fileName = [userInfo.name, startDate, endDate].join('_') + ".pdf"
+    await createSheet("./"+fileName, userInfo, work, year)
   }
 }
 
