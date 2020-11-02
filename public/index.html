@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+  <head>
+    <title>signature pad</title>
+    <script src="https://code.jquery.com/jquery-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+  <script>
+    $(function(){
+      var signaturePad = new SignaturePad(document.getElementById('signature-pad'), {
+        backgroundColor: 'rgba(255, 255, 255, 0)',
+        penColor: 'rgb(0, 0, 0)'
+      });
+      var saveButton = document.getElementById('save');
+      var cancelButton = document.getElementById('clear');
+
+      saveButton.addEventListener('click', function (event) {
+        var img = signaturePad.toDataURL('image/png');
+        $.post(
+          "http://127.0.0.1:8080/",
+          {imgData: img},
+          "json"
+        ).done(function(data) {
+          window.close();
+        }
+        );
+
+      });
+
+      cancelButton.addEventListener('click', function (event) {
+        signaturePad.clear();
+      });
+    })
+  </script>
+  </head>
+  <body>
+    <h1>
+      서명란
+    </h1>
+    <div class="wrapper" >
+      <canvas id="signature-pad" class="signature-pad" width=300 height=200 style="border-width: 1px; border-color: black; border-style: solid;"></canvas>
+    </div>
+    <div>
+      <button id="save">Save</button>
+      <button id="clear">Clear</button>
+    </div>
+  </body>
+</html>
