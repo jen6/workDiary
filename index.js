@@ -3,6 +3,11 @@ const { PDFDocument, StandardFonts} = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs');
 const parse = require('csv-parse/lib/sync');
+const open = require('open');
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var upload = multer();
+const express = require('express')
 var path = require('path');
 
 var appDir = path.dirname(require.main.filename);
@@ -32,6 +37,7 @@ const writerPoint = new Point(327, 120);
 const signYearPoint = new Point(410, 155);
 const signMonthPoint = new Point(455, 155);
 const signDatePoint = new Point(489, 155);
+const signSignaturePoint = new Point(410, 95);
 
 class UserInfo {
   constructor(name, birth, milStartDate, phoneNumber, workPlace, companyName, chairmanName, reason) {
@@ -65,6 +71,17 @@ class WorkInfos {
 
 const file = fs.readFileSync(appDir + "/assets/work.pdf")
 const fontFile = fs.readFileSync(appDir + "/assets/NanumBarunGothic.otf")
+
+async function drawUserSignature(page, signature) {
+  const scale = signature.scale(0.2);
+  page.drawImage(signature, {
+    x: signSignaturePoint.x, // firstPage.getWidth() / 2 - 150,
+    y: signSignaturePoint.y, //  - pngDims.height,
+    width: scale.width,
+    height: scale.height,
+  })
+  return page
+}
 
 async function drawUserInfo(page, userInfo) {
   var fontSize = 10
@@ -117,15 +134,17 @@ async function drawUserInfo(page, userInfo) {
   return page;
 }
 
-async function createSheet(fileName, userInfo, workInfos, year) {
+async function createSheet(fileName, userInfo, workInfos, year, imgData) {
   const pdfDoc = await PDFDocument.load(file)
 
   pdfDoc.registerFontkit(fontkit);
   const font = await pdfDoc.embedFont(fontFile)
+  const signature = await pdfDoc.embedPng(imgData)
 
   var page = pdfDoc.getPage(0)
   page.setFont(font);
 
+  page = await drawUserSignature(page, signature);
   page = await drawUserInfo(page, userInfo);
 
   const workInfoLen = workInfos.workInfoList.length
@@ -218,7 +237,44 @@ async function parseCSV(csvFileName) {
   return [userInfo, workInfos]
 }
 
+const sleep = (ms) => {
+   return new Promise(resolve=>{
+       setTimeout(resolve,ms)
+   })
+}
+
+async function getSignature() {
+  const app = express()
+  app.use(bodyParser.json()); // for parsing application/json
+  app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+  app.use(upload.array()); // for parsing multipart/form-data
+  app.use(express.static('public'))
+
+  var data = ""
+
+  app.post('/', (req, res) =>{
+    res.send("Hello")
+    data = req.body.imgData
+  })
+
+  const server = app.listen(8080, () => {
+    console.log(`http://localhost:8080 에 접속해 서명부를 위한 싸인을 해주세요`)
+  })
+  open("http://127.0.0.1:8080/index.html")
+
+  for(;;){
+    if (data !== "") {
+      break;
+    }
+    await sleep(1000)
+  }
+
+  server.close()
+  return data
+}
+
 async function main(){
+  const signature = await getSignature()
   var myArgs = process.argv.slice(2);
   if (myArgs.length == 0) {
     console.log("Usage : workDiary 'csv file path' '[year]'")
@@ -236,7 +292,7 @@ async function main(){
     const startDate = work.startDate.replace('/', '_')
     const endDate = work.endDate.replace('/', '_')
     const fileName = [userInfo.name, startDate, endDate].join('_') + ".pdf"
-    await createSheet("./"+fileName, userInfo, work, year)
+    await createSheet("./"+fileName, userInfo, work, year, signature)
   }
 }
 
