@@ -248,7 +248,7 @@ async function getSignature() {
   app.use(bodyParser.json()); // for parsing application/json
   app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
   app.use(upload.array()); // for parsing multipart/form-data
-  app.use(express.static('public'))
+  app.use(express.static(appDir+'/public'))
 
   var data = ""
 
