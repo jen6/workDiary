@@ -9,6 +9,7 @@ var multer = require('multer');
 var upload = multer();
 const express = require('express')
 var path = require('path');
+const os = require('os');
 
 var appDir = path.dirname(require.main.filename);
 
@@ -136,7 +137,6 @@ async function drawUserInfo(page, userInfo) {
 
 async function createSheet(fileName, userInfo, workInfos, year, imgData) {
   const pdfDoc = await PDFDocument.load(file)
-
   pdfDoc.registerFontkit(fontkit);
   const font = await pdfDoc.embedFont(fontFile)
   const signature = await pdfDoc.embedPng(imgData)
@@ -243,14 +243,39 @@ const sleep = (ms) => {
    })
 }
 
-async function getSignature() {
+function getSignatureFilePath() {
+  const tmpDir = os.tmpdir();
+  filePath = path.join(tmpDir, "workDiary-signature.png");
+  return filePath;
+}
+function getSignatureFromFile() {
+  const filePath = getSignatureFilePath();
+  if(fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath, { encoding: "utf-8" })
+  }
+  return "";
+}
+
+function writeSignatureFile(data) {
+  const filePath = getSignatureFilePath();
+  fs.writeFileSync(filePath, data);
+}
+
+async function getSignature(isReuseSign) {
+  var data = "";
+  if (isReuseSign === true) {
+    data = getSignatureFromFile();
+    if (data !== "") {
+      return data;
+    }  
+  }
+
   const app = express()
   app.use(bodyParser.json()); // for parsing application/json
   app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
   app.use(upload.array()); // for parsing multipart/form-data
   app.use(express.static(appDir+'/public'))
-
-  var data = ""
+  
 
   app.post('/', (req, res) =>{
     res.send("Hello")
@@ -270,11 +295,11 @@ async function getSignature() {
   }
 
   server.close()
+  writeSignatureFile(data);
   return data
 }
 
 async function main(){
-  const signature = await getSignature()
   var myArgs = process.argv.slice(2);
   if (myArgs.length == 0) {
     console.log("Usage : workDiary 'csv file path' '[year]'")
@@ -285,6 +310,9 @@ async function main(){
   if (typeof year === "undefined") {
     year = new Date().getFullYear().toString();
   }
+  const reuseSign = myArgs.filter((arg) => arg === "--reuse-sign");
+  const isReuseSign = reuseSign.length > 0;
+  const signature = await getSignature(isReuseSign);
   const [userInfo, workInfos] = await parseCSV(csvFileName);
 
   for (var i = 0; i < workInfos.length; i++) {
