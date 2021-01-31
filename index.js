@@ -4,6 +4,8 @@ const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs');
 const parse = require('csv-parse/lib/sync');
 const open = require('open');
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var upload = multer();
@@ -69,73 +71,74 @@ class WorkInfos {
   }
 }
 
-const file = fs.readFileSync(appDir + "/assets/work.pdf")
+const DefaultPdfTemplatePath = appDir +  "/assets/work.pdf"
+const pdfTemplate = fs.readFileSync(appDir + "/assets/work.pdf")
 const fontFile = fs.readFileSync(appDir + "/assets/NanumBarunGothic.otf")
 
-async function drawUserSignature(page, signature) {
+async function drawUserSignature(page, signature, adjustX, adjustY) {
   const scale = signature.scale(0.2);
   page.drawImage(signature, {
-    x: signSignaturePoint.x, // firstPage.getWidth() / 2 - 150,
-    y: signSignaturePoint.y, //  - pngDims.height,
+    x: signSignaturePoint.x + adjustX, // firstPage.getWidth() / 2 - 150,
+    y: signSignaturePoint.y + adjustY, //  - pngDims.height,
     width: scale.width,
     height: scale.height,
   })
   return page
 }
 
-async function drawUserInfo(page, userInfo) {
+async function drawUserInfo(page, userInfo, adjustX, adjustY) {
   var fontSize = 10
   page.drawText(userInfo.name, {
-    x: namePoint.x,
-    y: namePoint.y - fontSize,
+    x: namePoint.x + adjustX,
+    y: namePoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.name, {
-    x: writerPoint.x,
-    y: writerPoint.y - fontSize,
+    x: writerPoint.x + adjustX,
+    y: writerPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.companyName, {
-    x: companyPoint.x,
-    y: companyPoint.y - fontSize,
+    x: companyPoint.x + adjustX,
+    y: companyPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.birth, {
-    x: birthPoint.x,
-    y: birthPoint.y - fontSize,
+    x: birthPoint.x + adjustX,
+    y: birthPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.milStartDate, {
-    x: milStartPoint.x,
-    y: milStartPoint.y - fontSize,
+    x: milStartPoint.x + adjustX,
+    y: milStartPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.phoneNumber, {
-    x: phonePoint.x,
-    y: phonePoint.y - fontSize,
+    x: phonePoint.x + adjustX,
+    y: phonePoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.workPlace, {
-    x: workPlacePoint.x,
-    y: workPlacePoint.y - fontSize,
+    x: workPlacePoint.x + adjustX,
+    y: workPlacePoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(userInfo.chairmanName, {
-    x: chairmanPoint.x,
-    y: chairmanPoint.y - fontSize,
+    x: chairmanPoint.x + adjustX,
+    y: chairmanPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   fontSize = 8
   page.drawText(userInfo.reason, {
-    x: reasonPoint.x,
-    y: reasonPoint.y - fontSize,
+    x: reasonPoint.x + adjustX,
+    y: reasonPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   return page;
 }
 
-async function createSheet(fileName, userInfo, workInfos, year, imgData) {
-  const pdfDoc = await PDFDocument.load(file)
+async function createSheet(pdfTemplatePath, fileName, userInfo, workInfos, year, imgData, adjustX, adjustY) {
+  const pdfDoc = await PDFDocument.load(fs.readFileSync(pdfTemplatePath))
 
   pdfDoc.registerFontkit(fontkit);
   const font = await pdfDoc.embedFont(fontFile)
@@ -144,8 +147,8 @@ async function createSheet(fileName, userInfo, workInfos, year, imgData) {
   var page = pdfDoc.getPage(0)
   page.setFont(font);
 
-  page = await drawUserSignature(page, signature);
-  page = await drawUserInfo(page, userInfo);
+  page = await drawUserSignature(page, signature, adjustX, adjustY);
+  page = await drawUserInfo(page, userInfo, adjustX, adjustY);
 
   const workInfoLen = workInfos.workInfoList.length
   const workDuration = workInfos.workInfoList[0].date + "~" + workInfos.workInfoList[workInfoLen-1].date
@@ -153,25 +156,25 @@ async function createSheet(fileName, userInfo, workInfos, year, imgData) {
 
   var fontSize = 8
   page.drawText(workDuration, {
-    x: durationPoint.x,
-    y: durationPoint.y - fontSize,
+    x: durationPoint.x + adjustX,
+    y: durationPoint.y - fontSize + adjustY,
     size: fontSize,
   })
 
   const splited = workInfos.workInfoList[workInfoLen-1].date.split('/')
   page.drawText(year, {
-    x: signYearPoint.x,
-    y: signYearPoint.y - fontSize,
+    x: signYearPoint.x + adjustX,
+    y: signYearPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(splited[0], {
-    x: signMonthPoint.x,
-    y: signMonthPoint.y - fontSize,
+    x: signMonthPoint.x + adjustX,
+    y: signMonthPoint.y - fontSize + adjustY,
     size: fontSize,
   })
   page.drawText(splited[1], {
-    x: signDatePoint.x,
-    y: signDatePoint.y - fontSize,
+    x: signDatePoint.x + adjustX,
+    y: signDatePoint.y - fontSize + adjustY,
     size: fontSize,
   })
 
@@ -180,25 +183,25 @@ async function createSheet(fileName, userInfo, workInfos, year, imgData) {
     const height = 63
     var workInfo = workInfos.workInfoList[i]
     page.drawText(workInfo.date, {
-      x: workStartDatePoint.x,
-      y: workStartDatePoint.y - fontSize - height*i,
+      x: workStartDatePoint.x + adjustX,
+      y: workStartDatePoint.y - fontSize - height*i + adjustY,
       size: fontSize,
     })
     page.drawText(workInfo.workMemo, {
-      x: workMemoPoint.x,
-      y: workMemoPoint.y - fontSize - height*i,
+      x: workMemoPoint.x + adjustX,
+      y: workMemoPoint.y - fontSize - height*i + adjustY,
       size: fontSize,
     })
 
     fontSize = 6
     page.drawText(workInfo.workStartTime, {
-      x: workStartTimePoint.x,
-      y: workStartTimePoint.y - fontSize - height*i,
+      x: workStartTimePoint.x + adjustX,
+      y: workStartTimePoint.y - fontSize - height*i + adjustY,
       size: fontSize,
     })
     page.drawText(workInfo.workEndTime, {
-      x: workEndTimePoint.x,
-      y: workEndTimePoint.y - fontSize - height*i,
+      x: workEndTimePoint.x + adjustX,
+      y: workEndTimePoint.y - fontSize - height*i + adjustY,
       size: fontSize,
     })
   }
@@ -273,18 +276,54 @@ async function getSignature() {
   return data
 }
 
+function parseArgv() {
+  const argv = yargs(hideBin(process.argv))
+    .option('csv', {
+      alias: 'c',
+      type: 'string',
+      description: 'file path of csv file',
+      default: undefined
+    })
+    .option('year', {
+      alias: 'y',
+      type: 'string',
+      description: 'change year in document (default is current year)',
+      default: new Date().getFullYear().toString()
+    })
+    .option('template', {
+      alias: 't',
+      type: 'string',
+      description: 'set custom template of document',
+      default: DefaultPdfTemplatePath
+    })
+    .option('x', {
+      type: 'number',
+      number: true,
+      description: 'custom template option to adjust cordinate',
+      default: 0
+    })
+    .option('template', {
+      type: 'number',
+      number: true,
+      description: 'custom template option to adjust cordinate',
+      default: 0
+    })
+
+  return argv;
+}
+
 async function main(){
   const signature = await getSignature()
-  var myArgs = process.argv.slice(2);
-  if (myArgs.length == 0) {
-    console.log("Usage : workDiary 'csv file path' '[year]'")
-    console.log("Example : workDiary ./sheet.csv 2020")
+  const myArgs = parseArgv()
+
+  if (myArgs.argv.csv === undefined) {
+    console.log("-c csv file path needed")
+    myArgs.showHelp()
+    process.exit(1)
   }
-  const csvFileName = myArgs[0]
-  var year = myArgs[1]
-  if (typeof year === "undefined") {
-    year = new Date().getFullYear().toString();
-  }
+
+  const csvFileName = myArgs.argv.csv
+  var year = myArgs.argv.year
   const [userInfo, workInfos] = await parseCSV(csvFileName);
 
   for (var i = 0; i < workInfos.length; i++) {
@@ -292,8 +331,11 @@ async function main(){
     const startDate = work.startDate.replace('/', '_')
     const endDate = work.endDate.replace('/', '_')
     const fileName = [userInfo.name, startDate, endDate].join('_') + ".pdf"
-    await createSheet("./"+fileName, userInfo, work, year, signature)
+    await createSheet(myArgs.argv.template,"./"+fileName, userInfo, work, year, signature, myArgs.argv.x * 1, myArgs.argv.y * 1)
   }
 }
 
-main().then(()=>{console.log("success")})
+main().then(()=>{
+  console.log("success")
+  process.exit(0)
+})
