@@ -296,13 +296,13 @@ function parseArgv() {
       description: 'set custom template of document',
       default: DefaultPdfTemplatePath
     })
-    .option('x', {
+    .option('dx', {
       type: 'number',
       number: true,
       description: 'custom template option to adjust cordinate',
       default: 0
     })
-    .option('template', {
+    .option('dy', {
       type: 'number',
       number: true,
       description: 'custom template option to adjust cordinate',
@@ -331,7 +331,7 @@ async function main(){
     const startDate = work.startDate.replace('/', '_')
     const endDate = work.endDate.replace('/', '_')
     const fileName = [userInfo.name, startDate, endDate].join('_') + ".pdf"
-    await createSheet(myArgs.argv.template,"./"+fileName, userInfo, work, year, signature, myArgs.argv.x * 1, myArgs.argv.y * 1)
+    await createSheet(myArgs.argv.template,"./"+fileName, userInfo, work, year, signature, myArgs.argv.dx * 1, myArgs.argv.dy * 1)
   }
 }
 
