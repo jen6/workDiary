@@ -15,15 +15,15 @@ npm install -g https://github.com/jen6/workDiary
 
 다 작성 한 후 csv로 export 해서 저장해줍니다.
 ```
-$ workDiary -csv csv.csv
+$ workDiary --csv csv.csv
 ```
 
 ### custom template option
 회사 내에서 써야하는 pdf template이 바뀌었는데 전체적으로 위치가 밀린경우 custom template기능을 사용하면 됩니다.
-`-template` 옵션으로 template pdf를 지정해주시고 `-x`, `-y` 옵션으로 좌표를 조정해줍니다.
+`-template` 옵션으로 template pdf를 지정해주시고 `--dx`, `--dy` 옵션으로 좌표를 조정해줍니다.
 전체적인 틀이 달라졌다면 사용할 수 없습니다. 안채우고 싶은 칸들은 csv상에서 비워주세요
 ```
-$ workDiary -csv csv.csv -template template.pdf -x 0 -y 30
+$ workDiary --csv csv.csv --template template.pdf --dx 0 --dy 30
 ```
 
 
